@@ -83,6 +83,9 @@ func main() {
 
 	// Run one with debug setup for "test" and one with error.
 	for _, level := range []logging.Level{logging.DEBUG, logging.ERROR} {
+		// note that SetLevel should be called _after_
+                // configuring the backend, since these settings
+                // actually get pushed into the backed
 		logging.SetLevel(level, "test")
 
 		log.Critical("crit")
