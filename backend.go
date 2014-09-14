@@ -28,7 +28,10 @@ func SetBackend(backends ...Backend) LeveledBackend {
 }
 
 // SetLevel sets the logging level for the specified module. The module
-// corresponds to the string specified in GetLogger.
+// corresponds to the string specified in GetLogger.  Glob characters
+// suitable for use in `path.Match` may be used.  Exact (non-glob) settings
+// take precedence over pattern matches, and in the case of overlapping
+// patterns, settings applied later override earlier settings
 func SetLevel(level Level, module string) {
 	defaultBackend.SetLevel(level, module)
 }

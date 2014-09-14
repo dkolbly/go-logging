@@ -8,6 +8,7 @@ import (
 	"errors"
 	"strings"
 	"sync"
+	"path"
 )
 
 var ErrInvalidLogLevel = errors.New("logger: invalid log level")
@@ -61,11 +62,18 @@ type LeveledBackend interface {
 	Leveled
 }
 
+type levelRule struct {
+	pattern		string
+	level		Level
+}
+
 type moduleLeveled struct {
-	levels    map[string]Level
-	backend   Backend
-	formatter Formatter
-	once      sync.Once
+	levels		map[string]Level
+	exactMatch	map[string]Level
+	patternRules	[]levelRule
+	backend		Backend
+	formatter	Formatter
+	once		sync.Once
 }
 
 // AddModuleLevel wraps a log backend with knobs to have different log levels
@@ -76,6 +84,8 @@ func AddModuleLevel(backend Backend) LeveledBackend {
 	if leveled, ok = backend.(LeveledBackend); !ok {
 		leveled = &moduleLeveled{
 			levels:  make(map[string]Level),
+			exactMatch: make(map[string]Level),
+			patternRules: make([]levelRule, 0),
 			backend: backend,
 		}
 	}
@@ -85,19 +95,50 @@ func AddModuleLevel(backend Backend) LeveledBackend {
 // GetLevel returns the log level for the given module.
 func (l *moduleLeveled) GetLevel(module string) Level {
 	level, exists := l.levels[module]
-	if exists == false {
-		level, exists = l.levels[""]
-		// no configuration exists, default to debug
-		if exists == false {
-			level = DEBUG
+	if !exists {
+		level, exists = l.exactMatch[module]
+		if !exists {
+			level = DEBUG // default value in case of no match
+			for _, r := range l.patternRules {
+				match, _ := path.Match(r.pattern, module)
+				if match {
+					level = r.level
+				}
+			}
 		}
+		// cache the result
+		l.levels[module] = level
 	}
 	return level
 }
 
-// SetLevel sets the log level for the given module.
+// SetLevel sets the log level for the given module.  If the
+// module contains one of the special characters '*' or '?',
+// then it is interpreted as a glob (unless `path.Match` rejects
+// the pattern as being malformed, in which case an error is logged
+// and the module is considered an exact match)
 func (l *moduleLeveled) SetLevel(level Level, module string) {
-	l.levels[module] = level
+	// check for globbing
+	isglob := false
+	if strings.Contains(module, "*") || strings.Contains(module, "?") {
+		_, err := path.Match(module, "testvalue")
+		if err == nil {
+			isglob = true
+		} else {
+			MustGetLogger("logger").Error("Invalid module pattern %q", module)
+		}
+	}
+	// add the rule
+	if isglob {
+		l.patternRules = append(l.patternRules, levelRule{module, level})
+		// clear the cache if there's anything in it
+		if len(l.levels) > 0 {
+			l.levels = make(map[string]Level)
+		}
+	} else {
+		l.exactMatch[module] = level
+		l.levels[module] = level
+	}
 }
 
 // IsEnabledFor will return true if logging is enabled for the given module.
