@@ -183,15 +183,15 @@ func (l *Logger) log(lvl Level, format string, args ...interface{}) {
 }
 
 func (l *Logger) Print(v ...interface{}) {
-	l.Output(2, fmt.Sprint(v))
+	l.Output(2, fmt.Sprint(v...))
 }
 
 func (l *Logger) Printf(format string, v ...interface{}) {
-	l.Output(2, fmt.Sprintf(format, v))
+	l.Output(2, fmt.Sprintf(format, v...))
 }
 
 func (l *Logger) Println(v ...interface{}) {
-	l.Output(2, fmt.Sprintln(v))
+	l.Output(2, fmt.Sprintln(v...))
 }
 
 func (l *Logger) Output(calldepth int, s string) error {
