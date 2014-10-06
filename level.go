@@ -6,9 +6,9 @@ package logging
 
 import (
 	"errors"
+	"path"
 	"strings"
 	"sync"
-	"path"
 )
 
 var ErrInvalidLogLevel = errors.New("logger: invalid log level")
@@ -63,17 +63,17 @@ type LeveledBackend interface {
 }
 
 type levelRule struct {
-	pattern		string
-	level		Level
+	pattern string
+	level   Level
 }
 
 type moduleLeveled struct {
-	levels		map[string]Level
-	exactMatch	map[string]Level
-	patternRules	[]levelRule
-	backend		Backend
-	formatter	Formatter
-	once		sync.Once
+	levels       map[string]Level
+	exactMatch   map[string]Level
+	patternRules []levelRule
+	backend      Backend
+	formatter    Formatter
+	once         sync.Once
 }
 
 // AddModuleLevel wraps a log backend with knobs to have different log levels
@@ -83,10 +83,10 @@ func AddModuleLevel(backend Backend) LeveledBackend {
 	var ok bool
 	if leveled, ok = backend.(LeveledBackend); !ok {
 		leveled = &moduleLeveled{
-			levels:  make(map[string]Level),
-			exactMatch: make(map[string]Level),
+			levels:       make(map[string]Level),
+			exactMatch:   make(map[string]Level),
 			patternRules: make([]levelRule, 0),
-			backend: backend,
+			backend:      backend,
 		}
 	}
 	return leveled

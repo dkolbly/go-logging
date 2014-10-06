@@ -107,16 +107,21 @@ type LevelLogger interface {
 	Error(format string, args ...interface{})
 	Critical(format string, args ...interface{})
 }
-	
+
 type Logger struct {
-	Module		string
-	flags		int
+	Module string
+	flags  int
+	// the Level at which we Output records (defaults to INFO)
+	OutputLevel Level
 }
 
 // TODO call NewLogger and remove MustGetLogger?
 // GetLogger creates and returns a Logger object based on the module name.
 func GetLogger(module string) (LevelLogger, error) {
-	return &Logger{Module: module}, nil
+	return &Logger{
+		Module:      module,
+		OutputLevel: INFO,
+	}, nil
 }
 
 // MustGetLogger is like GetLogger but panics if the logger can't be created.
@@ -200,7 +205,7 @@ func (l *Logger) Output(calldepth int, s string) error {
 		Id:     atomic.AddUint64(&sequenceNo, 1),
 		Time:   timeNow(),
 		Module: l.Module,
-		Level:  INFO,
+		Level:  l.OutputLevel,
 		fmt:    "%s",
 		args:   []interface{}{s},
 	}
