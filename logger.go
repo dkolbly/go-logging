@@ -93,6 +93,7 @@ type LevelLogger interface {
 	// Go1 details of log.Logger that don't seem appropriate to
 	// the abstract notion of logging
 	Output(calldepth int, s string) error
+	Outputf(adjcalldepth int, format string, args ...interface{})
 	Prefix() string
 	Flags() int
 	SetFlags(flag int)
@@ -117,7 +118,7 @@ type Logger struct {
 
 // TODO call NewLogger and remove MustGetLogger?
 // GetLogger creates and returns a Logger object based on the module name.
-func GetLogger(module string) (LevelLogger, error) {
+func GetLogger(module string) (*Logger, error) {
 	return &Logger{
 		Module:      module,
 		OutputLevel: INFO,
@@ -126,7 +127,7 @@ func GetLogger(module string) (LevelLogger, error) {
 
 // MustGetLogger is like GetLogger but panics if the logger can't be created.
 // It simplifies safe initialization of a global logger for eg. a package.
-func MustGetLogger(module string) LevelLogger {
+func MustGetLogger(module string) *Logger {
 	logger, err := GetLogger(module)
 	if err != nil {
 		panic("logger: " + module + ": " + err.Error())
@@ -215,8 +216,27 @@ func (l *Logger) Output(calldepth int, s string) error {
 
 	// calldepth=2 brings the stack up to the caller of the level
 	// methods, Info(), Fatal(), etc.
-	defaultBackend.Log(INFO, calldepth, record)
+	defaultBackend.Log(l.OutputLevel, calldepth, record)
 	return nil
+}
+
+
+func (l *Logger) Outputf(adjdepth int, fmt string, args ...interface{}) {
+	// Create the logging record and pass it in to the backend
+	record := &Record{
+		Id:     atomic.AddUint64(&sequenceNo, 1),
+		Time:   timeNow(),
+		Module: l.Module,
+		Level:  l.OutputLevel,
+		fmt:    fmt,
+		args:   args,
+	}
+
+	// TODO use channels to fan out the records to all backends?
+	// TODO in case of errors, do something (tricky)
+
+	// calldepth=2 brings the stack up to the level of our caller
+	defaultBackend.Log(l.OutputLevel, 1+adjdepth, record)
 }
 
 func (l *Logger) SetFlags(flag int) {
