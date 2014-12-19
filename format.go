@@ -128,6 +128,8 @@ type part struct {
 // formatted string passed on to the logging backend.
 type stringFormatter struct {
 	parts []part
+	colors []string
+	boldcolors []string
 }
 
 // NewStringFormatter returns a new Formatter which outputs the log record as a
@@ -162,7 +164,10 @@ type stringFormatter struct {
 // just colorize the time and level, leaving the message uncolored
 
 func NewStringFormatter(format string) (*stringFormatter, error) {
-	var fmter = &stringFormatter{}
+	var fmter = &stringFormatter{
+		colors: colors,
+		boldcolors: boldcolors,
+	}
 
 	// Find the boundaries of all %{vars}
 	matches := formatRe.FindAllStringSubmatchIndex(format, -1)
@@ -233,6 +238,21 @@ func MustStringFormatter(format string) *stringFormatter {
 	return f
 }
 
+func (f *stringFormatter) SetColor(level Level, str string) {
+	c := make([]string, DEBUG+1)
+	copy(c, f.colors)
+	c[level] = str
+	f.colors = c
+}
+
+func (f *stringFormatter) SetBoldColor(level Level, str string) {
+	c := make([]string, DEBUG+1)
+	copy(c, f.boldcolors)
+	c[level] = str
+	f.boldcolors = c
+}
+
+
 func (f *stringFormatter) add(verb fmtVerb, layout string) {
 	f.parts = append(f.parts, part{verb, layout})
 }
@@ -245,11 +265,11 @@ func (f *stringFormatter) Format(calldepth int, r *Record, output io.Writer) err
 			output.Write([]byte(r.Time.Format(part.layout)))
 		} else if part.verb == fmtVerbLevelColor {
 			if part.layout == "bold" {
-				output.Write([]byte(boldcolors[r.Level]))
+				output.Write([]byte(f.boldcolors[r.Level]))
 			} else if part.layout == "reset" {
 				output.Write([]byte("\033[0m"))
 			} else {
-				output.Write([]byte(colors[r.Level]))
+				output.Write([]byte(f.colors[r.Level]))
 			}
 		} else {
 			var v interface{}

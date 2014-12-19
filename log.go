@@ -45,8 +45,8 @@ func (b *LogBackend) Log(level Level, calldepth int, rec *Record) error {
 		buf.Write([]byte(colors[level]))
 		buf.Write([]byte(rec.Formatted(calldepth + 1)))
 		buf.Write([]byte("\033[0m"))
-		// For some reason, the Go logger arbitrarily decided "2" was the correct
-		// call depth...
+		// For some reason, the Go logger arbitrarily decided "2" was
+		// the correct call depth...
 		return b.Logger.Output(calldepth+2, buf.String())
 	} else {
 		return b.Logger.Output(calldepth+2, rec.Formatted(calldepth+1))
@@ -62,19 +62,29 @@ func colorSeqBold(color color) string {
 	return fmt.Sprintf("\033[%d;1m", int(color))
 }
 
+func colorSeqBg(color color) string {
+	return fmt.Sprintf("\033[%dm", int(10+color))
+}
+
+func colorSeqFaint(color color) string {
+	return fmt.Sprintf("\033[%d;2m", int(color))
+}
+
 func init() {
 	colors = []string{
 		CRITICAL: colorSeq(colorMagenta),
 		ERROR:    colorSeq(colorRed),
 		WARNING:  colorSeq(colorYellow),
 		NOTICE:   colorSeq(colorGreen),
-		DEBUG:    colorSeq(colorCyan),
+		INFO:     colorSeqFaint(colorGreen),
+		DEBUG:    colorSeqFaint(colorCyan),
 	}
 	boldcolors = []string{
 		CRITICAL: colorSeqBold(colorMagenta),
 		ERROR:    colorSeqBold(colorRed),
 		WARNING:  colorSeqBold(colorYellow),
 		NOTICE:   colorSeqBold(colorGreen),
-		DEBUG:    colorSeqBold(colorCyan),
+		INFO:     colorSeq(colorGreen),
+		DEBUG:    colorSeq(colorWhite),
 	}
 }
