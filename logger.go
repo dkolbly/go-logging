@@ -37,6 +37,13 @@ var (
 	timeNow = time.Now
 )
 
+// Annotation is a key/value entry; the Annotator backend can
+// add annotations
+type Annotation struct {
+	Key string
+	Value interface{}
+}
+
 // Record represents a log record and contains the timestamp when the record
 // was created, an increasing id, filename and line and finally the actual
 // formatted log line.
@@ -45,6 +52,7 @@ type Record struct {
 	Time   time.Time
 	Module string
 	Level  Level
+	Annotations []Annotation
 
 	// message is kept as a pointer to have shallow copies update this once
 	// needed.
@@ -114,6 +122,19 @@ type Logger struct {
 	flags  int
 	// the Level at which we Output records (defaults to INFO)
 	OutputLevel Level
+	backend LeveledBackend
+}
+
+func (l *Logger) SetBackend(b LeveledBackend) {
+	l.backend = b
+}
+
+func (l *Logger) Backend() LeveledBackend {
+	if l.backend == nil {
+		return defaultBackend
+	} else {
+		return l.backend
+	}
 }
 
 // TODO call NewLogger and remove MustGetLogger?
@@ -166,7 +187,7 @@ func InitForTesting(level Level) *MemoryBackend {
 
 // IsEnabledFor returns true if the logger is enabled for the given level.
 func (l *Logger) IsEnabledFor(level Level) bool {
-	return defaultBackend.IsEnabledFor(level, l.Module)
+	return l.Backend().IsEnabledFor(level, l.Module)
 }
 
 func (l *Logger) log(lvl Level, format string, args ...interface{}) {
@@ -185,7 +206,7 @@ func (l *Logger) log(lvl Level, format string, args ...interface{}) {
 
 	// calldepth=2 brings the stack up to the caller of the level
 	// methods, Info(), Fatal(), etc.
-	defaultBackend.Log(lvl, 2, record)
+	l.Backend().Log(lvl, 2, record)
 }
 
 func (l *Logger) Print(v ...interface{}) {
@@ -216,7 +237,7 @@ func (l *Logger) Output(calldepth int, s string) error {
 
 	// calldepth=2 brings the stack up to the caller of the level
 	// methods, Info(), Fatal(), etc.
-	defaultBackend.Log(l.OutputLevel, calldepth, record)
+	l.Backend().Log(l.OutputLevel, calldepth, record)
 	return nil
 }
 
@@ -236,7 +257,7 @@ func (l *Logger) Outputf(adjdepth int, fmt string, args ...interface{}) {
 	// TODO in case of errors, do something (tricky)
 
 	// calldepth=2 brings the stack up to the level of our caller
-	defaultBackend.Log(l.OutputLevel, 1+adjdepth, record)
+	l.Backend().Log(l.OutputLevel, 1+adjdepth, record)
 }
 
 func (l *Logger) SetFlags(flag int) {
