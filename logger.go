@@ -123,6 +123,7 @@ type Logger struct {
 	// the Level at which we Output records (defaults to INFO)
 	OutputLevel Level
 	backend LeveledBackend
+	annotater Annotater
 }
 
 func (l *Logger) SetBackend(b LeveledBackend) {
@@ -200,7 +201,9 @@ func (l *Logger) log(lvl Level, format string, args ...interface{}) {
 		fmt:    format,
 		args:   args,
 	}
-
+	if l.annotater != nil {
+		l.annotater.Annotate(record)
+	}
 	// TODO use channels to fan out the records to all backends?
 	// TODO in case of errors, do something (tricky)
 
@@ -230,6 +233,9 @@ func (l *Logger) Output(calldepth int, s string) error {
 		Level:  l.OutputLevel,
 		fmt:    "%s",
 		args:   []interface{}{s},
+	}
+	if l.annotater != nil {
+		l.annotater.Annotate(record)
 	}
 
 	// TODO use channels to fan out the records to all backends?
