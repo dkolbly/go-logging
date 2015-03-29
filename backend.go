@@ -27,6 +27,17 @@ func SetBackend(backends ...Backend) LeveledBackend {
 	return defaultBackend
 }
 
+
+// AddBackend adds a new backend to the backend chain
+func AddBackend(b Backend) {
+	multi, ok := defaultBackend.(*multiLogger)
+	if !ok {
+		defaultBackend = MultiLogger(defaultBackend)
+	}
+	multi = defaultBackend.(*multiLogger)
+	multi.backends = append(multi.backends, AddModuleLevel(b))
+}
+
 // SetLevel sets the logging level for the specified module. The module
 // corresponds to the string specified in GetLogger.  Glob characters
 // suitable for use in `path.Match` may be used.  Exact (non-glob) settings

@@ -3,14 +3,14 @@ package logging
 // An Annotator is a kind of Backend that adds some annotations
 // to a message in flight
 type Annotator struct {
-	Extras map[string]Annotation
+	Extras        map[string]Annotation
 	DynamicExtras func() []Annotation
-	backend Backend
+	backend       Backend
 }
 
 func NewAnnotator(b Backend) *Annotator {
 	return &Annotator{
-		Extras: map[string]Annotation{},
+		Extras:  map[string]Annotation{},
 		backend: b,
 	}
 }
@@ -42,4 +42,3 @@ func (a *Annotator) Log(lvl Level, depth int, rec *Record) error {
 	}
 	return a.Backend().Log(lvl, depth+1, rec)
 }
-
