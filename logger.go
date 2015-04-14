@@ -191,7 +191,7 @@ func (l *Logger) IsEnabledFor(level Level) bool {
 	return l.Backend().IsEnabledFor(level, l.Module)
 }
 
-func (l *Logger) log(lvl Level, format string, args ...interface{}) {
+func (l *Logger) Log(lvl Level, format string, args ...interface{}) {
 	// Create the logging record and pass it in to the backend
 	record := &Record{
 		Id:     atomic.AddUint64(&sequenceNo, 1),
@@ -285,72 +285,72 @@ func (l *Logger) Prefix() string {
 // Fatal is equivalent to l.Critical(fmt.Sprint()) followed by a call to os.Exit(1).
 func (l *Logger) Fatal(args ...interface{}) {
 	s := fmt.Sprint(args...)
-	l.log(CRITICAL, "%s", s)
+	l.Log(CRITICAL, "%s", s)
 	os.Exit(1)
 }
 
 // Fatalf is equivalent to l.Critical followed by a call to os.Exit(1).
 func (l *Logger) Fatalf(format string, args ...interface{}) {
-	l.log(CRITICAL, format, args...)
+	l.Log(CRITICAL, format, args...)
 	os.Exit(1)
 }
 
 // Fatalln is equivalent to l.Critical(fmt.Sprintln()) followed by a call to os.Exit(1).
 func (l *Logger) Fatalln(args ...interface{}) {
 	s := fmt.Sprintln(args...)
-	l.log(CRITICAL, "%s", s)
+	l.Log(CRITICAL, "%s", s)
 	os.Exit(1)
 }
 
 // Panic is equivalent to l.Critical(fmt.Sprint()) followed by a call to panic().
 func (l *Logger) Panic(args ...interface{}) {
 	s := fmt.Sprint(args...)
-	l.log(CRITICAL, "%s", s)
+	l.Log(CRITICAL, "%s", s)
 	panic(s)
 }
 
 // Panicf is equivalent to l.Critical followed by a call to panic().
 func (l *Logger) Panicf(format string, args ...interface{}) {
 	s := fmt.Sprintf(format, args...)
-	l.log(CRITICAL, "%s", s)
+	l.Log(CRITICAL, "%s", s)
 	panic(s)
 }
 
 // Panicln is equivalent to l.Critical(fmt.Sprintln()) followed by a call to panic().
 func (l *Logger) Panicln(args ...interface{}) {
 	s := fmt.Sprintln(args...)
-	l.log(CRITICAL, "%s", s)
+	l.Log(CRITICAL, "%s", s)
 	panic(s)
 }
 
 // Critical logs a message using CRITICAL as log level.
 func (l *Logger) Critical(format string, args ...interface{}) {
-	l.log(CRITICAL, format, args...)
+	l.Log(CRITICAL, format, args...)
 }
 
 // Error logs a message using ERROR as log level.
 func (l *Logger) Error(format string, args ...interface{}) {
-	l.log(ERROR, format, args...)
+	l.Log(ERROR, format, args...)
 }
 
 // Warning logs a message using WARNING as log level.
 func (l *Logger) Warning(format string, args ...interface{}) {
-	l.log(WARNING, format, args...)
+	l.Log(WARNING, format, args...)
 }
 
 // Notice logs a message using NOTICE as log level.
 func (l *Logger) Notice(format string, args ...interface{}) {
-	l.log(NOTICE, format, args...)
+	l.Log(NOTICE, format, args...)
 }
 
 // Info logs a message using INFO as log level.
 func (l *Logger) Info(format string, args ...interface{}) {
-	l.log(INFO, format, args...)
+	l.Log(INFO, format, args...)
 }
 
 // Debug logs a message using DEBUG as log level.
 func (l *Logger) Debug(format string, args ...interface{}) {
-	l.log(DEBUG, format, args...)
+	l.Log(DEBUG, format, args...)
 }
 
 func init() {
