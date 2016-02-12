@@ -69,6 +69,7 @@ type levelRule struct {
 
 type moduleLeveled struct {
 	levels       map[string]Level
+	levelLock    sync.Mutex
 	exactMatch   map[string]Level
 	patternRules []levelRule
 	backend      Backend
@@ -94,6 +95,8 @@ func AddModuleLevel(backend Backend) LeveledBackend {
 
 // GetLevel returns the log level for the given module.
 func (l *moduleLeveled) GetLevel(module string) Level {
+	l.levelLock.Lock()
+	defer l.levelLock.Unlock()
 	level, exists := l.levels[module]
 	if !exists {
 		level, exists = l.exactMatch[module]
@@ -129,6 +132,8 @@ func (l *moduleLeveled) SetLevel(level Level, module string) {
 		}
 	}
 	// add the rule
+	l.levelLock.Lock()
+	defer l.levelLock.Unlock()
 	if isglob {
 		l.patternRules = append(l.patternRules, levelRule{module, level})
 		// clear the cache if there's anything in it
